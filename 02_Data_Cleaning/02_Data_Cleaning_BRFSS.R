@@ -16,7 +16,16 @@ library("Hmisc")
 # "BRFSS" for the Behavioral Risk Factor Surveillance System. It was retrieved
 # from following url: https://www.cdc.gov/brfss/annual_data/annual_2023.html
 
-whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT")
+#whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT")
+
+#saveRDS(whole_brfss, 
+#        file = "./01_Datasets/whole_BRFSS_2023.rds", 
+#        compress = TRUE)
+
+whole_brfss <- readRDS("01_Datasets/whole_BRFSS_2023.rds")
+
+
+
 
 # Quick snapshot of the dataset:
 print(head(whole_brfss))
@@ -172,24 +181,6 @@ which(short_brfss$diabetes_type == 2)
 short_brfss$diabetes_status[short_brfss$diabetes_status == "Gestational diabetes"] <- "Yes"
 short_brfss$diabetes_status[short_brfss$diabetes_status == "Pre-diabetes"] <- "No"
 
-# Assigning labels to variables 
-# This is placed here because with earlier variables transformation overwrote 
-# the objects and removed the labels.
-labs <- c(id_no = "Sequence number", 
-          state_name = "Name of the State",
-          age = "Age of the respondent",
-          sex = "Sex of the respondent",
-          income_level= "Annual Household income from all sources",
-          BMI = "Body Mass Index",
-          physical_activity = "Any physical activity in past month?",
-          smoking = "Current smoking status",
-          tobacco_use = "Current tobacco use",
-          alc_drnk_30days = "At least one drink of alcohol in the past 30 days",
-          diabetes_status = "Diabetes status")
-
-label(short_brfss) <- as.list(labs[match(names(short_brfss),
-                                         names(labs))])
-
 
 # Adding 2 decimal places for numerical variable: BMI
 short_brfss$BMI <- short_brfss$BMI/100
@@ -275,6 +266,24 @@ sum(is.na(short_brfss$diabetes_status))
 
 # Check structure after deletion
 str(short_brfss)
+
+# Assigning labels to variables 
+# This is placed here because with earlier variables transformation overwrote 
+# the objects and removed the labels.
+labs <- c(id_no = "Sequence number", 
+          state_name = "Name of the State",
+          age = "Age of the respondent",
+          sex = "Sex of the respondent",
+          income_level= "Annual Household income from all sources",
+          BMI = "Body Mass Index",
+          physical_activity = "Any physical activity in past month?",
+          smoking = "Current smoking status",
+          tobacco_use = "Current tobacco use",
+          alc_drnk_30days = "At least one drink of alcohol in the past 30 days",
+          diabetes_status = "Diabetes status")
+
+label(short_brfss) <- as.list(labs[match(names(short_brfss),
+                                         names(labs))])
 
 # Export cleaned dataset for further analysis, the dataset was saved to .rds 
 # format to preserve the metadata of factor levels and value labels.
