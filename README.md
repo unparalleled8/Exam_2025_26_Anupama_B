@@ -9,11 +9,8 @@ This project examines the association of behavioral factors with diabetes among 
 
 ## Project overview
 * Dataset size: 400,000+ rows
-
 * Data Source: https://www.cdc.gov/brfss/annual_data/annual_2023.html under the filename [2023 BRFSS Data (SAS Transport Format)].
-
 * Tool used: R programming language
-
 * Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualizations, Calculate Logistic Regression
 
 ## Variables description
