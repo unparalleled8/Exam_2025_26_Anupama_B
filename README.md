@@ -15,8 +15,11 @@ Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualiz
 
 ## Variables description
 Predictors:
+
 id_no = Sequence number
+
 state_name = Name of the State
+
 age = Age of the respondent
 sex = Sex of the respondent
 income_level= Annual Household income from all sources
