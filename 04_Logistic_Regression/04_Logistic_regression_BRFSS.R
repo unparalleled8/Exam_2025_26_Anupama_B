@@ -1,7 +1,8 @@
-#install package:
-install.packages("jtools")
-# Load library: 
+# Install package:
+if (!requireNamespace("jtools")) install.packages("jtools")
 
+# Load library: 
+library("jtools") # to produce summary of regression model
 
 # Load dataset:
 df <- readRDS("./01_Datasets/diabetes_brfss_cleaned.rds")
@@ -17,12 +18,12 @@ table(df$diabetes_status)
 df$diabetes_status <- factor(df$diabetes_status, levels = c("No", "Yes"))
 
 # Logistics regression calculation
-LR_1 <- glm(diabetes_status ~ physical_activity + smoking + tobacco_use +
+LR <- glm(diabetes_status ~ physical_activity + smoking + tobacco_use +
               alc_drnk_30days, 
             family = binomial(link = "logit"), data = df)
 
 # Report estimated odds ratio,p-value and 95% CI. 
-jtools::summ(LR_1, exp = T, confint = T, model.fit = F, digits = 3)
+jtools::summ(LR, exp = T, confint = T, model.fit = F, digits = 3)
 
 # Estimated odds ratio (OR), 95% confidence interval of OR and p-value for each 
 # predictor

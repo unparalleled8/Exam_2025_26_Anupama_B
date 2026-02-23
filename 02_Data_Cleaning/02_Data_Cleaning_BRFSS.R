@@ -1,42 +1,33 @@
-# Install package: 
-# if (!requireNamespace("haven", quitely = TRUE)) install.packages("haven")
-# if (!requireNamespace("Hmisc", quitely = TRUE)) install.packages("Hmisc")
+# Install packages: 
+# if (!requireNamespace("haven")) install.packages("haven")
+if (!requireNamespace("Hmisc")) install.packages("Hmisc")
 
 
 # Load library:
-library("haven") #to load SAS format data in R
-library("Hmisc")
+# library("haven") # to load SAS format (.XPT) data in R
+library("Hmisc") # to assign labels to variables
 
 # Load dataset:
-# Reads the .XPT file format
-# The dataset includes the data on health risk behaviors, chronic diseases and 
-# conditions, access to health care, and use of preventive health services 
-# related to the leading causes of death and disability in different states of
-# the United States of America for the year 2023. The dataset is abbreviated as 
-# "BRFSS" for the Behavioral Risk Factor Surveillance System. It was retrieved
-# from following url: https://www.cdc.gov/brfss/annual_data/annual_2023.html
+# At first, I extracted .XPT file and worked on it, however, later, I faced 
+# issues while pushing to Github due to large file size (>1 GB. Therefore, I 
+# converted it to .rds format to compress the file to around 45 MB which could 
+# be pushed to Github. 
 
-#whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT")
+# whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT")
 
-#saveRDS(whole_brfss, 
+# Therefore, I converted it to .rds format to compress the file to 45.8 MB 
+# and it could be uploaded to Github. 
+
+# saveRDS(whole_brfss, 
 #        file = "./01_Datasets/whole_BRFSS_2023.rds", 
 #        compress = TRUE)
 
 whole_brfss <- readRDS("01_Datasets/whole_BRFSS_2023.rds")
 
 
-
-
-# Quick snapshot of the dataset:
+# Quick snapshot of the whole dataset:
 print(head(whole_brfss))
 head_whole_brfss <- head(whole_brfss)
-
-# For the following research question "Are behavioral factors associated 
-# with the Diabetes among adults in the USA based on Behavioral Risk 
-# Factor Surveillance System data of 2023?, the dataset is filtered for the 
-# relevant variables. These variables included: socio-demographic, biological,
-# behavioral and diabetes related variables. The outcome variable is of "Diabetes
-# Status". 
 
 # Filtering the dataset based on the relevant variables for the research question.
 short_brfss <- whole_brfss[c("SEQNO", 
@@ -49,25 +40,27 @@ short_brfss <- whole_brfss[c("SEQNO",
                             "_RFSMOK3", 
                             "USENOW3", 
                             "DRNKANY6",
-                            "DIABETE4")] 
+                            "DIABETE4",
+                            "DIABAGE4")] 
 
-# Examine the filtered dataframe:
-str(short_brfss)
-summary(short_brfss)
 
 # Rename the variables for easy readability: 
 names(short_brfss) <- c("id_no", 
-                        "state_name", 
-                        "age",
-                        "sex", 
-                        "income_level",
-                        "BMI",
-                        "physical_activity", 
-                        "smoking", 
-                        "tobacco_use",
-                        "alc_drnk_30days", 
-                        "diabetes_status")
+                        "state_name",        # Name of the State
+                        "age",               # Age of the respondent
+                        "sex",               # Sex of the respondent
+                        "income_level",      # Annual Household income from all sources
+                        "BMI",               # Body Mass Index
+                        "physical_activity", # Any physical activity in past month?
+                        "smoking",           # Current smoking status
+                        "tobacco_use",       # Current tobacco use
+                        "alc_drnk_30days",   # At least one drink of alcohol in the past 30 days
+                        "diabetes_status",   # Diabetes status
+                        "diab_first_known")  # Age when first told had diabetes
 
+
+# Examine the filtered dataframe:
+str(short_brfss)
 
 
 # Assigning value labels to categorical variables
@@ -169,26 +162,22 @@ short_brfss$diabetes_status <- factor(short_brfss$diabetes_status,
                                                  "Don't know/Not Sure",
                                                  "Refused"))
 
-# Since a lot of initial rows seemed blank, it was not clear if the value labels
-# were assigned correctly, therefore, I checked for the count of each types and 
-# which row had the first instance.
-table(short_brfss$diabetes_type)
-which(short_brfss$diabetes_type == 2)
-
 # Additionally, we will modify the level "Gestational diabetes" to "Yes" and 
 # "Pre-diabetes" to "No". This would be crucial for later logistics regression 
 # as in R it needs outcome variable "Y" with a factor with two levels.
-short_brfss$diabetes_status[short_brfss$diabetes_status == "Gestational diabetes"] <- "Yes"
-short_brfss$diabetes_status[short_brfss$diabetes_status == "Pre-diabetes"] <- "No"
+short_brfss$diabetes_status[short_brfss$diabetes_status == 
+                              "Gestational diabetes"] <- "Yes"
+short_brfss$diabetes_status[short_brfss$diabetes_status == 
+                              "Pre-diabetes"] <- "No"
 
 
 # Adding 2 decimal places for numerical variable: BMI
 short_brfss$BMI <- short_brfss$BMI/100
 
-# Handling missing values section
+
 # Replace the values like missing, don't know/not sure, refused, to NA for 
 # easier missing value calculation
-
+# Function prep to replace with NA
 to_be_replaced <- list(
   income_level = c("Don't know/Not sure/Missing"),
   physical_activity = c("Don't know/Not Sure","Refused"),
@@ -208,9 +197,6 @@ replace_with_na <- function(df, to_be_replaced) {
 
 short_brfss <- replace_with_na(short_brfss, to_be_replaced)
 
-
-# Check NAs in all columns at once
-sapply(short_brfss, function(x) sum(is.na(x)))
 
 
 # Deleting empty factor levels from the variables
@@ -244,28 +230,20 @@ short_brfss$diabetes_status <- factor(short_brfss$diabetes_status,
 # Check levels of each variable
 lapply(short_brfss[, c("diabetes_status", "physical_activity", "smoking", 
                        "tobacco_use", "alc_drnk_30days")], table)
+# Handling missing values 
+
+# Check NAs in all columns at once
+sapply(short_brfss, function(x) sum(is.na(x)))
 
 # Given that most predictor variables have large number of missing values, 
 # "Complete Case Analysis", involving removing entire rows(cases) that contain 
 # any missing values would not be appropriate as this would reduce the sample 
 # size and also it would introduce bias as these data are not missing completely 
-# at random. Therefore, we would do "Available Case Analysis" at least for the 
-# predictor variables where we use the data that are present for a respondent 
-# and skips for data that are missing.However, we would only drop those NAs which
-# are in the outcome variable (diabetes status) so that it won't affect the model
-# performance.  
-# (Ref: https://www.tandfonline.com/doi/full/10.1080/10696679.2024.2376052#d1e575)
-
-
-# Dropping rows from data frame with NA values in diabetes_status
-short_brfss <- subset(short_brfss, !is.na(diabetes_status))
-
-# Checks NAs in diabetes_status
-sum(is.na(short_brfss$diabetes_status))
-
-
-# Check structure after deletion
-str(short_brfss)
+# at random. Therefore, we would do "Available Case Analysis" for the predictor 
+# variables where we use the data that are present for a respondent and skips 
+# for data that are missing. Example: For specific visualizations requiring 
+# selected variables, rows with missing values for all selected variables were 
+# excluded to ensure comparative presentation.
 
 # Assigning labels to variables 
 # This is placed here because with earlier variables transformation overwrote 
@@ -280,12 +258,13 @@ labs <- c(id_no = "Sequence number",
           smoking = "Current smoking status",
           tobacco_use = "Current tobacco use",
           alc_drnk_30days = "At least one drink of alcohol in the past 30 days",
-          diabetes_status = "Diabetes status")
+          diabetes_status = "Diabetes status",
+          diab_first_known = "Age when first told had diabetes")
 
 label(short_brfss) <- as.list(labs[match(names(short_brfss),
                                          names(labs))])
 
-# Export cleaned dataset for further analysis, the dataset was saved to .rds 
+# Export the dataset for further analysis, the dataset was saved to .rds 
 # format to preserve the metadata of factor levels and value labels.
 saveRDS(short_brfss, 
         file = "./01_Datasets/diabetes_brfss_cleaned.rds", 
