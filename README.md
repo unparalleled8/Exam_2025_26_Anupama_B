@@ -59,5 +59,5 @@ Outcome variable:
 * Interpretation
 
 ## Conclusion
-The application of logistic regression to multiple behavioral variables showed that physical activity in the past month and alcohol intake in the past 30 days are statistically significant (p < 0.001) factors associated with having diabetes among respondents, based on the 2023 BRFSS data.
+The report explored socio-demographic, biological, behavioral and diabetes related characteristics. Among the behavioral characteristics, lack of physical activity in a month and recent alcohol consumption, had statistical significant association with the diabetes. Additionally, current non-smoking status was also associated with having diabetes which could reflect behavioral modification after diagnosis.
 
