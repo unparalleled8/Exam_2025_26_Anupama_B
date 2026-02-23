@@ -33,30 +33,30 @@ Outcome variable:
 
 
 ## Data cleaning script overview
-Loads .XPT format file
-Converts .XPT format to .rds format compressed file
-Loads .rds format compressed file
-Subsets a dataset with relevant variables for the objectives
-Formats column names
-Assigns value labels to variables
-Handles missing values
-Saves cleaned data to a .rds format file
+* Loads .XPT format file
+* Converts .XPT format to .rds format compressed file
+* Loads .rds format compressed file
+* Subsets a dataset with relevant variables for the objectives
+* Formats column names
+* Assigns value labels to variables
+* Handles missing values
+* Saves cleaned data to a .rds format file
 
 ## Visualizations
-Socio-demographic:
-    Mean age
-    Population age pyramid based on sex
-    Income level categorization based on state on map
-Biological:
-    Mean BMI 
-Behavioral:
-    2×2 panel (multi-panel): physical activity, smoking, alcohol intake, tobacco use
+* Socio-demographic:
+    * Mean age
+    * Population age pyramid based on sex
+    * Income level categorization based on state on map
+* Biological:
+    * Mean BMI 
+* Behavioral:
+    * 2×2 panel (multi-panel): physical activity, smoking, alcohol intake, tobacco use
 
 ## Logistic Regression
-Loads .rda dataset
-Reorder of the level
-Multiple logistic regression calculation
-Interpretation
+* Loads .rda dataset
+* Reorder of the level
+* Multiple logistic regression calculation
+* Interpretation
 
 ## Conclusion
 The application of logistic regression to multiple behavioral variables showed that physical activity in the past month and alcohol intake in the past 30 days are statistically significant (p < 0.001) factors associated with having diabetes among respondents, based on the 2023 BRFSS data.
