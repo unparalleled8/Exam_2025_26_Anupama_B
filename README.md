@@ -8,37 +8,31 @@ This project examines the association of behavioral factors with diabetes among 
 2. To examine the association of behavioral factors with the diabetes status
 
 ## Project overview
-Dataset size: 400,000+ rows
-Data Source: https://www.cdc.gov/brfss/annual_data/annual_2023.html under the filename [2023 BRFSS Data (SAS Transport Format)].
-Tool used: R programming language
-Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualizations, Calculate Logistic Regression
+* Dataset size: 400,000+ rows
+
+* Data Source: https://www.cdc.gov/brfss/annual_data/annual_2023.html under the filename [2023 BRFSS Data (SAS Transport Format)].
+
+* Tool used: R programming language
+
+* Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualizations, Calculate Logistic Regression
 
 ## Variables description
 Predictors:
 
 * id_no = Sequence number
 * state_name = Name of the State
-
-age = Age of the respondent
-
-sex = Sex of the respondent
-
-income_level= Annual Household income from all sources
-
-BMI = Body Mass Index
-
-physical_activity = Any physical activity in past month?
-
-smoking = Current smoking status
-
-tobacco_use = Current tobacco use
-
-alc_drnk_30days = At least one drink of alcohol in the past 30 days
-
-diab_first_known = Age when first told had diabetes
+* age = Age of the respondent
+* sex = Sex of the respondent
+* income_level= Annual Household income from all sources
+* BMI = Body Mass Index
+* physical_activity = Any physical activity in past month?
+* smoking = Current smoking status
+* tobacco_use = Current tobacco use
+* alc_drnk_30days = At least one drink of alcohol in the past 30 days
+* diab_first_known = Age when first told had diabetes
           
 Outcome variable:
-diabetes_status = Diabetes status
+* diabetes_status = Diabetes status
 
 
 ## Data cleaning script overview
