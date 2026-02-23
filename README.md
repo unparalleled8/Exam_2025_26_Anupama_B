@@ -42,7 +42,7 @@ Outcome variable:
 * Handles missing values
 * Saves cleaned data to a .rds format file
 
-## Visualizations
+## Descriptive statistics
 * Socio-demographic:
     * Population pyramid (Age & Sex)
 * Biological:
