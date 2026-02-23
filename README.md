@@ -44,14 +44,16 @@ Outcome variable:
 
 ## Visualizations
 * Socio-demographic:
-    * Mean age
-    * Population age pyramid based on sex
-    * Income level categorization based on state on map
+    * Population pyramid (Age & Sex)
 * Biological:
     * Mean BMI 
 * Behavioral:
     * 2×2 panel (multi-panel): physical activity, smoking, alcohol intake, tobacco use
-
+* Diabetes related
+   * Diabetes status by income level
+   * US States by Diabetes Prevalence: BRFSS, 2023
+   * Mean Age of First Known Diabetes Diagnosis
+     
 ## Logistic Regression
 * Loads .rda dataset
 * Reorder of the level
