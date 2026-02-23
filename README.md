@@ -16,18 +16,25 @@ Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualiz
 ## Variables description
 Predictors:
 
-id_no = Sequence number
-
-state_name = Name of the State
+* id_no = Sequence number
+* state_name = Name of the State
 
 age = Age of the respondent
+
 sex = Sex of the respondent
+
 income_level= Annual Household income from all sources
+
 BMI = Body Mass Index
+
 physical_activity = Any physical activity in past month?
+
 smoking = Current smoking status
+
 tobacco_use = Current tobacco use
+
 alc_drnk_30days = At least one drink of alcohol in the past 30 days
+
 diab_first_known = Age when first told had diabetes
           
 Outcome variable:
