@@ -238,9 +238,6 @@ plot_usmap(data = diab_st_df,
     legend.position = "right",
     legend.background = element_rect(fill = "lightblue", color = NA))
 
-# Behavioral:
-# Grouped bar chart for PA, smoking, alocohol intake & tobacco use proportion
-
 # Diabetes related:
 # Mean Age of First Known Diabetes Diagnosis
 mean_diab_first <- mean(df$diab_first_known, na.rm = TRUE)

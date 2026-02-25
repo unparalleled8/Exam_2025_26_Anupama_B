@@ -1,21 +1,15 @@
-### Diabetes Behaviroral Factors Analysis Project
+### Report on exploration of factors associated with diabetes
 
 ## Overview
-This project examines the association of behavioral factors with diabetes among adults in the United States using Behavioral Risk Factor Surveillance System (BRFSS) data collected on 2023. The dataset is filtered for the relevant variables to meet the objective. These variables included: socio-demographic, biological, behavioral and diabetes related variables. The outcome variable is of "Diabetes Status". This project is done as a requirement to pass the course "Fundamental of Programming".
-
-## Project objectives
-1. To explore the socio-demographic, biological and behvarioural characteristics of the respondents
-2. To examine the association of behavioral factors with the diabetes status
+The project explores the socio-demographic, biological, behavioral characteristics related to diabetes based on the responses collected among the adults in the United States using Behavioral Risk Factor Surveillance System (BRFSS) in 2023.
 
 ## Project overview
 * Dataset size: 400,000+ rows
 * Data Source: https://www.cdc.gov/brfss/annual_data/annual_2023.html under the filename [2023 BRFSS Data (SAS Transport Format)].
 * Tool used: R programming language
-* Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualizations, Calculate Logistic Regression
+* Techniques applied: Data cleaning, Exploratory Data Analysis (EDA) with visualizations
 
 ## Variables description
-Predictors:
-
 * id_no = Sequence number
 * state_name = Name of the State
 * age = Age of the respondent
@@ -27,18 +21,14 @@ Predictors:
 * tobacco_use = Current tobacco use
 * alc_drnk_30days = At least one drink of alcohol in the past 30 days
 * diab_first_known = Age when first told had diabetes
-          
-Outcome variable:
 * diabetes_status = Diabetes status
-
 
 ## Data cleaning script overview
 * Loads .XPT format file
-* Converts .XPT format to .rds format compressed file
-* Loads .rds format compressed file
-* Subsets a dataset with relevant variables for the objectives
-* Formats column names
-* Assigns value labels to variables
+* Subsets a dataset with relevant variables
+* Converts .XPT format to .csv format compressed file
+* Loads .csv format file
+* Prepares data: label, recode, rescale
 * Handles missing values
 * Saves cleaned data to a .rds format file
 
@@ -51,15 +41,5 @@ Outcome variable:
     * 2×2 panel (multi-panel): physical activity, smoking, alcohol intake, tobacco use
 * Diabetes related
    * Diabetes status by income level
-   * US States by Diabetes Prevalence: BRFSS, 2023
-   * Mean Age of First Known Diabetes Diagnosis
-     
-## Logistic Regression
-* Loads .rda dataset
-* Reorder of the level
-* Multiple logistic regression calculation
-* Interpretation
-
-## Conclusion
-The report explored socio-demographic, biological, behavioral and diabetes related characteristics. Among the behavioral characteristics, lack of physical activity in a month and recent alcohol consumption, had statistical significant association with the diabetes. Additionally, current non-smoking status was also associated with having diabetes which could reflect behavioral modification after diagnosis.
-
+   * US States by diabetes prevalence: BRFSS, 2023
+   * Mean age of first diabetes diagnosis
