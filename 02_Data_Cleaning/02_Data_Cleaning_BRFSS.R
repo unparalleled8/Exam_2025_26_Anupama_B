@@ -1,5 +1,5 @@
 # Install packages: 
-# if (!requireNamespace("haven")) install.packages("haven")
+if (!requireNamespace("haven")) install.packages("haven")
 if (!requireNamespace("Hmisc")) install.packages("Hmisc")
 
 
@@ -8,63 +8,51 @@ if (!requireNamespace("Hmisc")) install.packages("Hmisc")
 library("Hmisc") # to assign labels to variables
 
 # Load dataset:
-# At first, I extracted .XPT file and worked on it, however, later, I faced 
-# issues while pushing to Github due to large file size (>1 GB. Therefore, I 
-# converted it to .rds format to compress the file to around 45 MB which could 
-# be pushed to Github. 
+# Loading .XPT format data
+# whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT") #(uncomment to load)
+# Issue: Large file size (> 1 GB), did not push to Github
 
-# whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT")
+# Solution: Creating a dataframe with filtered variables and converting .XPT
+# file to .csv, this format is of less size and can be pushed to Github
+# short_brfss <- whole_brfss[c("SEQNO", "_STATE", "_AGE80", "SEXVAR", "_INCOMG1",
+#                             "_BMI5", "EXERANY2", "_RFSMOK3", "USENOW3",
+#                             "DRNKANY6", "DIABETE4", "DIABAGE4")]
 
-# Therefore, I converted it to .rds format to compress the file to 45.8 MB 
-# and it could be uploaded to Github. 
+# Save as .csv file with the filtered columns name
+# (uncomment following to save)
+# write.csv(short_brfss, "01_Datasets/short_brfss.csv", row.names = FALSE)
 
-# saveRDS(whole_brfss, 
-#        file = "./01_Datasets/whole_BRFSS_2023.rds", 
-#        compress = TRUE)
-
-whole_brfss <- readRDS("01_Datasets/whole_BRFSS_2023.rds")
-
-
-# Quick snapshot of the whole dataset:
-print(head(whole_brfss))
-head_whole_brfss <- head(whole_brfss)
-
-# Filtering the dataset based on the relevant variables for the research question.
-short_brfss <- whole_brfss[c("SEQNO", 
-                            "_STATE", 
-                            "_AGE80", 
-                            "SEXVAR", 
-                            "_INCOMG1",
-                            "_BMI5",
-                            "EXERANY2",
-                            "_RFSMOK3", 
-                            "USENOW3", 
-                            "DRNKANY6",
-                            "DIABETE4",
-                            "DIABAGE4")] 
-
-
-# Rename the variables for easy readability: 
-names(short_brfss) <- c("id_no", 
-                        "state_name",        # Name of the State
-                        "age",               # Age of the respondent
-                        "sex",               # Sex of the respondent
-                        "income_level",      # Annual Household income from all sources
-                        "BMI",               # Body Mass Index
-                        "physical_activity", # Any physical activity in past month?
-                        "smoking",           # Current smoking status
-                        "tobacco_use",       # Current tobacco use
-                        "alc_drnk_30days",   # At least one drink of alcohol in the past 30 days
-                        "diabetes_status",   # Diabetes status
-                        "diab_first_known")  # Age when first told had diabetes
+# Read .csv dataframe and rename the variables
+short_brfss <- read.table("01_Datasets/short_brfss.csv",
+                          header = TRUE,
+                          sep = ",",
+                          col.names = c("id_no",
+                                        "state_name",        # Name of the State
+                                        "age",               # Age of the respondent
+                                        "sex",               # Sex of the respondent
+                                        "income_level",      # Annual Household income from all sources
+                                        "BMI",               # Body Mass Index
+                                        "physical_activity", # Any physical activity in past month?
+                                        "smoking",           # Current smoking status
+                                        "tobacco_use",       # Current tobacco use
+                                        "alc_drnk_30days",   # At least one drink of alcohol in the past 30 days
+                                        "diabetes_status",   # Diabetes status
+                                        "diab_first_known"),  # Age when first told had diabetes,
+                          stringsAsFactors = FALSE)
 
 
 # Examine the filtered dataframe:
 str(short_brfss)
 
 
-# Assigning value labels to categorical variables
-# variable: state_name
+factor_labels <- function(data, var, levels, labels) {
+  data[[var]] <- factor(data[[var]],
+                        levels = levels,
+                        labels = labels)
+  return(data)
+}
+
+# labels for states 
 state_labels <- c("1" = "Alabama", "2" = "Alaska", "4" = "Arizona", 
                   "5" = "Arkansas", "6" = "California", "8" = "Colorado", 
                   "9" = "Connecticut", "10" = "Delaware", 
@@ -84,122 +72,113 @@ state_labels <- c("1" = "Alabama", "2" = "Alaska", "4" = "Arizona",
                   "50" = "Vermont", "51" = "Virginia", "53" = "Washington", 
                   "54" = "West Virginia", "55" = "Wisconsin", "56" = "Wyoming", 
                   "66" = "Guam", "72" = "Puerto Rico", "78" = "Virgin Islands"
-                  )
+)
 
-short_brfss$state_name <- factor(short_brfss$state_name,
-                                 levels = as.numeric(names(state_labels)),
-                                 labels = state_labels
-                                 )
+# labels for income
+income_labels <- c("1" = "Less than $15,000",
+                   "2" = "$15,000 to < $25,000",
+                   "3" = "$25,000 to < $35,000",
+                   "4" = "$35,000 to < $50,000",
+                   "5" = "$50,000 to < $100,000",
+                   "6" = "$100,000 to < $200,000",
+                   "7" = "$200,000 or more",
+                   "9" = "Don't know/Not sure/Missing"
+)
 
-# variable: sex
-short_brfss$sex <- factor(short_brfss$sex, 
-                              levels = c(1, 2),
-                              labels = c("Male", "Female"))
+all_labels <- list(
+  state_name = list(
+    levels = as.numeric(names(state_labels)),
+    labels = state_labels
+  ),
+  
+  sex = list(
+    levels = c(1,2),
+    labels = c("Male","Female")
+  ),
+  
+  income_level = list(
+    levels = as.numeric(names(income_labels)),
+    labels = income_labels
+  ),
+  
+  physical_activity = list(
+    levels = c(1,2,7,9),
+    labels = c("Yes","No","Don't know/Not Sure","Refused")
+  ),
+  
+  smoking = list(
+    levels = c(2,1,9),
+    labels = c("Yes", "No","Don't know/Refused/Missing")
+  ),
+  
+  alc_drnk_30days = list(
+    levels = c(1,2,7,9),
+    labels = c("Yes","No","Don't know/Not Sure","Refused")
+  ),
+  
+  tobacco_use = list(
+    levels = c(1, 2, 3, 7, 9),
+    labels = c("Every day", "Some days", "Not at all", 
+               "Don't know/Not Sure", "Refused")
+  ),
+  
+  diabetes_status = list(
+    levels = c(1,2,3,4,7,9),
+    labels = c("Yes", "Gestational diabetes", "No",
+               "Pre-diabetes", "Don't know/Not Sure",
+               "Refused")
+  )
+)
 
-# variable: income_level
-income_labs <- c("1" = "Less than $15,000",
-                         "2" = "$15,000 to < $25,000",
-                         "3" = "$25,000 to < $35,000",
-                         "4" = "$35,000 to < $50,000",
-                         "5" = "$50,000 to < $100,000",
-                         "6" = "$100,000 to < $200,000",
-                         "7" = "$200,000 or more",
-                         "9" = "Don't know/Not sure/Missing")
+# Apply the factor conversion in loop
+for (var in names(all_labels)) {
+  short_brfss <- factor_labels(
+    short_brfss,
+    var,
+    all_labels[[var]]$levels,
+    all_labels[[var]]$labels
+  )
+}
 
-short_brfss$income_level<- factor(short_brfss$income_level,
-                                  levels = as.numeric(names(income_labs)),
-                                  labels = income_labs)
+# Re-coding tobacco use 
+short_brfss$tobacco_use <- as.character(short_brfss$tobacco_use)
+short_brfss$tobacco_use[short_brfss$tobacco_use %in% 
+                          c("Every day", "Some days")] <- "Yes"
+short_brfss$tobacco_use[short_brfss$tobacco_use == 
+                          "Not at all"] <- "No"
 
-
-# variable: physical_activity
-short_brfss$physical_activity <- factor(short_brfss$physical_activity,
-                                            levels = c(1, 2, 7, 9),
-                                            labels = c("Yes",
-                                                       "No",
-                                                       "Don't know/Not Sure",
-                                                       "Refused"))
-
-# variable: smoking
-short_brfss$smoking <- factor(short_brfss$smoking,
-                                      levels = c(1, 2, 9),
-                                      labels = c("No",
-                                                 "Yes",
-                                                 "Don't know/Refused/Missing"))
-#Reorder the levels 
-short_brfss$smoking <- factor(short_brfss$smoking, levels = c("Yes", "No"))
-
-
-# variable: tobacco_use
-short_brfss$tobacco_use <- factor(short_brfss$tobacco_use,
-                              levels = c(1, 2, 3, 7, 9),
-                              labels = c("Every day",
-                                         "Some days",
-                                         "Not at all",
-                                         "Don't know/Not Sure",
-                                         "Refused"))
-
-# Modification to classify current tobacco users into two levels
-short_brfss$tobacco_use <- ifelse(short_brfss$tobacco_use %in% 
-                                    c("Every day", "Some days"), "Yes",
-                           ifelse(short_brfss$tobacco_use == "Not at all", "No", NA))
-
-
-# variable: alc_intake_30days
-short_brfss$alc_drnk_30days <- factor(short_brfss$alc_drnk_30days,
-                                      levels = c(1, 2, 7, 9),
-                                      labels = c("Yes",
-                                                 "No",
-                                                 "Don't know/Not Sure",
-                                                 "Refused"))
-
-# variable: diabetes_status
-short_brfss$diabetes_status <- factor(short_brfss$diabetes_status,
-                                      levels = c(1, 2, 3, 4, 7, 9),
-                                      labels = c("Yes",
-                                                 "Gestational diabetes",
-                                                 "No",
-                                                 "Pre-diabetes",
-                                                 "Don't know/Not Sure",
-                                                 "Refused"))
-
-# Additionally, we will modify the level "Gestational diabetes" to "Yes" and 
-# "Pre-diabetes" to "No". This would be crucial for later logistics regression 
-# as in R it needs outcome variable "Y" with a factor with two levels.
+# Re-coding diabetes_status 
 short_brfss$diabetes_status[short_brfss$diabetes_status == 
                               "Gestational diabetes"] <- "Yes"
 short_brfss$diabetes_status[short_brfss$diabetes_status == 
                               "Pre-diabetes"] <- "No"
 
-
-# Adding 2 decimal places for numerical variable: BMI
+# Re-scale numerical variable BMI by dividing by 100
 short_brfss$BMI <- short_brfss$BMI/100
 
-
-# Replace the values like missing, don't know/not sure, refused, to NA for 
-# easier missing value calculation
-# Function prep to replace with NA
+# List of variables with empty levels to be replaced with NA
 to_be_replaced <- list(
   income_level = c("Don't know/Not sure/Missing"),
   physical_activity = c("Don't know/Not Sure","Refused"),
   smoking         = c("Don't know/Refused/Missing"),
+  tobacco_use     = c("Don't know/Not Sure", "Refused"),
   alc_drnk_30days = c("Don't know/Not Sure","Refused"),
   diabetes_status = c("Don't know/Not Sure", "Refused")
-  )
+)
 
+# Function to replace  
 replace_with_na <- function(df, to_be_replaced) {
   for (v in names(to_be_replaced)) 
-    {
+  {
     df[[v]][df[[v]] %in% to_be_replaced[[v]]] <- NA
-    }
-  return(df)
   }
+  return(df)
+}
 
-
+# Applying function
 short_brfss <- replace_with_na(short_brfss, to_be_replaced)
 
-
-
-# Deleting empty factor levels from the variables
+# Clean empty level: income_level 
 short_brfss$income_level <- factor(short_brfss$income_level, 
                                    levels = c( "Less than $15,000",
                                                "$15,000 to < $25,000",
@@ -209,41 +188,35 @@ short_brfss$income_level <- factor(short_brfss$income_level,
                                                "$100,000 to < $200,000",
                                                "$200,000 or more"))
 
-# Reusing Yes, No levels
-reuse_yn <- c("Yes", "No")
+# Clean empty levels using loop
+YN_vars <- c("physical_activity",
+             "smoking",
+             "tobacco_use",
+             "alc_drnk_30days",
+             "diabetes_status")
 
-short_brfss$physical_activity <- factor(short_brfss$physical_activity, 
-                                        levels = reuse_yn)
+for (v in YN_vars) {
+  short_brfss[[v]] <- factor(short_brfss[[v]], levels = c("Yes", "No"))
+}
 
-short_brfss$smoking <- factor(short_brfss$smoking, 
-                              levels = reuse_yn)
+# Handling missing values 
 
-short_brfss$tobacco_use <- factor(short_brfss$tobacco_use, 
-                                  levels = reuse_yn)
-
-short_brfss$alc_drnk_30days <- factor(short_brfss$alc_drnk_30days, 
-                                      levels = reuse_yn)
-
-short_brfss$diabetes_status <- factor(short_brfss$diabetes_status, 
-                                      levels = reuse_yn)
-
-# Check levels of each variable
+# Check frequency and levels of each variable
 lapply(short_brfss[, c("diabetes_status", "physical_activity", "smoking", 
                        "tobacco_use", "alc_drnk_30days")], table)
-# Handling missing values 
 
 # Check NAs in all columns at once
 sapply(short_brfss, function(x) sum(is.na(x)))
 
-# Given that most predictor variables have large number of missing values, 
 # "Complete Case Analysis", involving removing entire rows(cases) that contain 
 # any missing values would not be appropriate as this would reduce the sample 
-# size and also it would introduce bias as these data are not missing completely 
-# at random. Therefore, we would do "Available Case Analysis" for the predictor 
-# variables where we use the data that are present for a respondent and skips 
-# for data that are missing. Example: For specific visualizations requiring 
-# selected variables, rows with missing values for all selected variables were 
-# excluded to ensure comparative presentation.
+# size and also it would introduce bias as these data are not missing completely
+# at random. Therefore, we would do "Available Case Analysis" where we use the 
+# data that are present for a respondent and skips for data that are missing. 
+# Example: For specific visualizations requiring selected variables, rows with 
+# missing values for all selected variables were dropped there to ensure 
+# comparative presentation. 
+# (Ref: <https://www.tandfonline.com/doi/full/10.1080/10696679.2024.2376052#d1e575>)
 
 # Assigning labels to variables 
 # This is placed here because with earlier variables transformation overwrote 
@@ -269,11 +242,3 @@ label(short_brfss) <- as.list(labs[match(names(short_brfss),
 saveRDS(short_brfss, 
         file = "./01_Datasets/diabetes_brfss_cleaned.rds", 
         compress = FALSE)
-
-
-
-
-
-
-
-

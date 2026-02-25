@@ -1,0 +1,619 @@
+---
+title: "Report on exploration of factors associated with diabetes"
+author: "Anupama Bishwokarma"
+format: html
+date: today
+editor: visual
+code-fold: true
+---
+
+```{r setup}
+#| echo: false
+knitr::opts_chunk$set(
+  echo = TRUE,       # Show code
+  warning = FALSE,   # Hide warnings
+  message = FALSE    # Hide messages
+)
+```
+
+## Project overview
+
+The project explores the socio-demographic, biological, behavioral characteristics related to diabetes based on the responses collected among the adults in the United States using Behavioral Risk Factor Surveillance System (BRFSS) in 2023. Data Source: <https://www.cdc.gov/brfss/annual_data/2023/files/LLCP2023XPT.zip>
+
+```{r Load package}
+#| echo: false
+#| output: false
+# Conditional installation of packages
+packages <- c("Hmisc", "haven", "ggplot2", "usmap")
+
+for (p in packages) {
+  if (!requireNamespace(p, quietly = TRUE)) {
+    install.packages(p)
+  }
+}
+```
+
+## Load library and dataset
+
+The whole dataset was filtered for 12 relevant variables with more than 400,000+ rows from 350 variables.
+
+```{r Load data}
+# Load all required packages
+library("Hmisc")    # to assign labels to variables
+library("haven")    # to read .XPT file
+library("ggplot2")  # for visualization of graphs
+library("usmap")    # to visualize the USA map
+
+# Loading .XPT format data
+# whole_brfss <- read_xpt("01_Datasets/whole_BRFSS_2023.XPT") #(uncomment to load)
+# Issue: Large file size (> 1 GB), did not push to Github
+
+# Solution: Creating a dataframe with filtered variables and converting .XPT
+# file to .csv, this format is of less size and can be pushed to Github
+# short_brfss <- whole_brfss[c("SEQNO", "_STATE", "_AGE80", "SEXVAR", "_INCOMG1",
+#                             "_BMI5", "EXERANY2", "_RFSMOK3", "USENOW3",
+#                             "DRNKANY6", "DIABETE4", "DIABAGE4")]
+
+# Save as .csv file with the filtered columns name
+# (uncomment following to save)
+# write.csv(short_brfss, "01_Datasets/short_brfss.csv", row.names = FALSE)
+
+# Read .csv dataframe and rename the variables
+short_brfss <- read.table("01_Datasets/short_brfss.csv",
+                          header = TRUE,
+                          sep = ",",
+                          col.names = c("id_no",
+                                        "state_name",        # Name of the State
+                                        "age",               # Age of the respondent
+                                        "sex",               # Sex of the respondent
+                                        "income_level",      # Annual Household income from all sources
+                                        "BMI",               # Body Mass Index
+                                        "physical_activity", # Any physical activity in past month?
+                                        "smoking",           # Current smoking status
+                                        "tobacco_use",       # Current tobacco use
+                                        "alc_drnk_30days",   # At least one drink of alcohol in the past 30 days
+                                        "diabetes_status",   # Diabetes status
+                                        "diab_first_known"),  # Age when first told had diabetes,
+                          stringsAsFactors = FALSE)
+```
+
+## Data preparation: labelling, recoding, rescale
+
+The dataset included of numeric and character data types.
+
+```{r Datatypes check}
+#| echo: false
+#| output: false
+# Check for data types
+str(short_brfss)
+```
+
+Following this, categorical variables were applied function to convert to labeled factors.
+
+```{r Apply factor labels}
+factor_labels <- function(data, var, levels, labels) {
+  data[[var]] <- factor(data[[var]],
+                        levels = levels,
+                        labels = labels)
+  return(data)
+}
+
+# labels for states 
+state_labels <- c("1" = "Alabama", "2" = "Alaska", "4" = "Arizona", 
+                  "5" = "Arkansas", "6" = "California", "8" = "Colorado", 
+                  "9" = "Connecticut", "10" = "Delaware", 
+                  "11" = "District of Columbia", "12" = "Florida", 
+                  "13" = "Georgia", "15" = "Hawaii", "16" = "Idaho", 
+                  "17" = "Illinois", "18" = "Indiana", "19" = "Iowa", 
+                  "20" = "Kansas", "22" = "Louisiana", "23" = "Maine", 
+                  "24" = "Maryland", "25" = "Massachusetts", "26" = "Michigan",
+                  "27" = "Minnesota", "28" = "Mississippi", "29" = "Missouri", 
+                  "30" = "Montana", "31" = "Nebraska", "32" = "Nevada", 
+                  "33" = "New Hampshire", "34" = "New Jersey", 
+                  "35" = "New Mexico", "36" = "New York", "37" = "North Carolina",
+                  "38" = "North Dakota", "39" = "Ohio", "40" = "Oklahoma", 
+                  "41" = "Oregon", "44" = "Rhode Island", 
+                  "45" = "South Carolina", "46" = "South Dakota", 
+                  "47" = "Tennessee", "48" = "Texas", "49" = "Utah", 
+                  "50" = "Vermont", "51" = "Virginia", "53" = "Washington", 
+                  "54" = "West Virginia", "55" = "Wisconsin", "56" = "Wyoming", 
+                  "66" = "Guam", "72" = "Puerto Rico", "78" = "Virgin Islands"
+                  )
+
+# labels for income
+income_labels <- c("1" = "Less than $15,000",
+                   "2" = "$15,000 to < $25,000",
+                   "3" = "$25,000 to < $35,000",
+                   "4" = "$35,000 to < $50,000",
+                   "5" = "$50,000 to < $100,000",
+                   "6" = "$100,000 to < $200,000",
+                   "7" = "$200,000 or more",
+                   "9" = "Don't know/Not sure/Missing"
+                   )
+
+all_labels <- list(
+  state_name = list(
+    levels = as.numeric(names(state_labels)),
+    labels = state_labels
+  ),
+
+  sex = list(
+    levels = c(1,2),
+    labels = c("Male","Female")
+  ),
+
+  income_level = list(
+    levels = as.numeric(names(income_labels)),
+    labels = income_labels
+  ),
+
+  physical_activity = list(
+    levels = c(1,2,7,9),
+    labels = c("Yes","No","Don't know/Not Sure","Refused")
+  ),
+
+  smoking = list(
+    levels = c(2,1,9),
+    labels = c("Yes", "No","Don't know/Refused/Missing")
+  ),
+
+  alc_drnk_30days = list(
+    levels = c(1,2,7,9),
+    labels = c("Yes","No","Don't know/Not Sure","Refused")
+  ),
+  
+  tobacco_use = list(
+    levels = c(1, 2, 3, 7, 9),
+    labels = c("Every day", "Some days", "Not at all", 
+               "Don't know/Not Sure", "Refused")
+  ),
+
+  diabetes_status = list(
+    levels = c(1,2,3,4,7,9),
+    labels = c("Yes", "Gestational diabetes", "No",
+               "Pre-diabetes", "Don't know/Not Sure",
+               "Refused")
+  )
+)
+
+# Apply the factor conversion in loop
+for (var in names(all_labels)) {
+  short_brfss <- factor_labels(
+    short_brfss,
+    var,
+    all_labels[[var]]$levels,
+    all_labels[[var]]$labels
+  )
+}
+```
+
+
+```{r Recode to two-levels}
+#| echo: false
+#| output: false
+# Re-coding tobacco use 
+short_brfss$tobacco_use <- as.character(short_brfss$tobacco_use)
+short_brfss$tobacco_use[short_brfss$tobacco_use %in% 
+                          c("Every day", "Some days")] <- "Yes"
+short_brfss$tobacco_use[short_brfss$tobacco_use == 
+                          "Not at all"] <- "No"
+
+# Re-coding diabetes_status 
+short_brfss$diabetes_status[short_brfss$diabetes_status == 
+                              "Gestational diabetes"] <- "Yes"
+short_brfss$diabetes_status[short_brfss$diabetes_status == 
+                              "Pre-diabetes"] <- "No"
+```
+
+Re-scale numerical variable BMI by dividing by 100.
+
+```{r Rescale BMI}
+# Re-scale numerical variable BMI by dividing by 100
+short_brfss$BMI <- short_brfss$BMI/100
+```
+
+Categorical variables had factor levels like missing, don't know/not sure, refused. Function was applied to replace NA on those for easier missing value calculation.
+
+```{r Replace empty levels with NA}
+# List of variables with empty levels to be replaced with NA
+to_be_replaced <- list(
+  income_level = c("Don't know/Not sure/Missing"),
+  physical_activity = c("Don't know/Not Sure","Refused"),
+  smoking         = c("Don't know/Refused/Missing"),
+  tobacco_use     = c("Don't know/Not Sure", "Refused"),
+  alc_drnk_30days = c("Don't know/Not Sure","Refused"),
+  diabetes_status = c("Don't know/Not Sure", "Refused")
+  )
+
+# Function to replace  
+replace_with_na <- function(df, to_be_replaced) {
+  for (v in names(to_be_replaced)) 
+    {
+    df[[v]][df[[v]] %in% to_be_replaced[[v]]] <- NA
+    }
+  return(df)
+  }
+
+# Applying function
+short_brfss <- replace_with_na(short_brfss, to_be_replaced)
+```
+
+
+```{r Clean Empty Levels}
+#| echo: false
+#| output: false
+# Clean empty level: income_level 
+short_brfss$income_level <- factor(short_brfss$income_level, 
+                                   levels = c( "Less than $15,000",
+                                               "$15,000 to < $25,000",
+                                               "$25,000 to < $35,000",
+                                               "$35,000 to < $50,000",
+                                               "$50,000 to < $100,000",
+                                               "$100,000 to < $200,000",
+                                               "$200,000 or more"))
+
+# Clean empty levels using loop
+YN_vars <- c("physical_activity",
+              "smoking",
+              "tobacco_use",
+              "alc_drnk_30days",
+              "diabetes_status")
+
+for (v in YN_vars) {
+  short_brfss[[v]] <- factor(short_brfss[[v]], levels = c("Yes", "No"))
+}
+```
+
+
+```{r Frequency table of variables}
+#| echo: false
+#| output: false
+# Check frequency and levels of each variable
+lapply(short_brfss[, c("diabetes_status", "physical_activity", "smoking", 
+                       "tobacco_use", "alc_drnk_30days")], table)
+```
+
+## Data cleaning: handling missing values
+
+Checking for NAs in all columns before making the decision.
+
+```{r Count missing values in each variable}
+# Check NAs in all columns at once
+sapply(short_brfss, function(x) sum(is.na(x)))
+```
+
+"Complete Case Analysis", involving removing entire rows(cases) that contain any missing values would not be appropriate as this would reduce the sample size and also it would introduce bias as these data are not missing completely at random. Therefore, we would do "Available Case Analysis" where we use the data that are present for a respondent and skips for data that are missing. Example: For specific visualizations requiring selected variables, rows with missing values for all selected variables were dropped there to ensure comparative presentation. (Ref: <https://www.tandfonline.com/doi/full/10.1080/10696679.2024.2376052#d1e575>)
+
+```{r Reassign variable labels}
+#| echo: false
+#| output: false
+# Assigning labels to variables 
+# This is placed here because with earlier variables transformation overwrote 
+# the objects and removed the labels.
+labs <- c(id_no = "Sequence number", 
+          state_name = "Name of the State",
+          age = "Age of the respondent",
+          sex = "Sex of the respondent",
+          income_level= "Annual Household income from all sources",
+          BMI = "Body Mass Index",
+          physical_activity = "Any physical activity in past month?",
+          smoking = "Current smoking status",
+          tobacco_use = "Current tobacco use",
+          alc_drnk_30days = "At least one drink of alcohol in the past 30 days",
+          diabetes_status = "Diabetes status",
+          diab_first_known = "Age when first told had diabetes")
+
+label(short_brfss) <- as.list(labs[match(names(short_brfss),
+                                         names(labs))])
+```
+
+
+```{r Save cleaned dataset}
+#| echo: false
+#| output: false
+# Export cleaned dataset for further analysis, the dataset was saved to .rds 
+# format to preserve the metadata of factor levels and value labels.
+# This was relevant when written on scripts earlier.
+saveRDS(short_brfss, 
+        file = "./01_Datasets/diabetes_brfss_cleaned.rds", 
+        compress = FALSE)
+```
+
+## Descriptive statistics
+
+```{r Load cleaned dataset}
+#| echo: false
+#| output: false
+df <- readRDS("./01_Datasets/diabetes_brfss_cleaned.rds")
+df <- short_brfss
+```
+
+### 1. Socio-demographic characteristics:
+
+#### 1.1 Population pyramid (Age & Sex):
+
+A population pyramid is selected, because, although age was recorded as a numeric variable, individuals above 80 years were reported simply as "\>80 years." Calculating and reporting the mean or median age would not be representative of the study population.
+
+```{r Population pyramid by age and sex}
+# Population pyramid (Age & Sex)
+# Create age groups
+df$age_g <- cut(df$age,
+                breaks = c(18, 25, 30, 
+                           35, 40, 45, 
+                           50, 55, 60, 
+                           65, 70, 75, 
+                           80, Inf),
+                labels = c("18-24", "25-29", 
+                           "30-34", "35-39", 
+                           "40-44", "45-49",
+                           "50-54", "55-59", 
+                           "60-64", "65-69", 
+                           "70-74", "75-79", 
+                           ">= 80"),
+                right = FALSE)
+
+# Creating dataframe with age groups and sex for pyramid
+py_df <- as.data.frame(table(df$age_g, 
+                             df$sex))
+colnames(py_df) <- c("age", 
+                     "sex", 
+                     "count")
+
+# Count observation for n
+total_pop <- sum(py_df$Freq)
+
+# Convert count to percentage
+py_df$count <- py_df$count / sum(py_df$count) * 100
+
+# Making one sex values negative for pyramid effect
+py_df$count <- ifelse(py_df$sex == "Male", 
+                      -py_df$count, py_df$count)
+
+# Create population pyramid
+ggplot(py_df, 
+       aes(x = age, 
+           y = count, 
+           fill = sex)) +
+  geom_bar(stat = "identity") +
+  # Adding percentage to bars
+  geom_text(aes(label = paste0(round(abs(count), 1), "%"),
+                hjust = ifelse(sex == "Male", 1.2, -0.2)),
+             position = "identity",
+                 size = 2.5,
+                color = "black") +
+  scale_y_continuous(labels = function(x) paste0(abs(x), "%"),
+                     limits = max(py_df$count) * c(-1.2, 1.2)) +
+  labs(title = expression(underline("Population Pyramid of BRFSS in 2023")),
+    subtitle = expression(underline("n = 433,323")),
+           x = "Age (in years)", 
+           y = "Population (in Percentage)",
+     caption = "Figure 1: Population pyramid of BRFSS in 2023") +
+  scale_colour_manual("Sex", values = c("steelblue", 
+                                        "pink"),
+                    aesthetics = c("colour", 
+                                   "fill")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, 
+                              size = 12),
+    axis.title = element_text(size = 8),
+    plot.subtitle = element_text(hjust = 0.5,
+                                  size = 8, 
+                                 color = "gray40"),
+    axis.text = element_text(size = 8),
+    plot.caption = element_text(hjust = 0.5, 
+                                 face = "italic", 
+                                 size = 8),
+    legend.position = "bottom",
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 8)) +
+  coord_flip()
+```
+
+Interpretation: There were more older adults (around 50 years and above) compared to younger adults in the sample. In addition, females were more represented than males, especially in the older age groups.
+
+### 2. Biological characteristics:
+
+#### 2.1 Mean BMI of the respondents
+
+```{r Mean BMI}
+summary(df$BMI, na.rm = TRUE)
+```
+
+Mean BMI of the respondents is 28.5, stating, in average, respondent were overweight.
+
+### 3. Behavioral characteristics:
+
+#### 3.1 2×2 panel (multi-panel) barplot
+
+```{r 2X2 Barplot behavioral characteristics}
+# Creating dataframe with behavioral variables
+behav_char <- df[c("physical_activity", 
+                   "smoking", 
+                   "tobacco_use", 
+                   "alc_drnk_30days")]
+
+# Removing rows with NAs from all variables to make plots comparable
+behav_char_clean <- behav_char[complete.cases(behav_char), ]
+
+# Count observation for n
+# nrow(behav_char_clean)
+
+# Counts table
+tab_behav <- sapply(behav_char_clean, table)
+
+# Transpose to wide data frame
+t_tab_behav <- as.data.frame(t(tab_behav))
+t_tab_behav$variable <- rownames(t_tab_behav)
+
+# Reshape to long
+l_tab_behav <- reshape(t_tab_behav,
+                       varying   = c("Yes", "No"),
+                       v.names   = "Count",
+                       timevar   = "Response",
+                       times     = c("Yes", "No"),
+                       direction = "long")
+
+# Set factor orders
+l_tab_behav$Response <- factor(l_tab_behav$Response, levels = c("Yes", "No"))
+l_tab_behav$variable <- factor(l_tab_behav$variable,
+                               levels = c("physical_activity", "smoking",
+                                          "tobacco_use", "alc_drnk_30days"),
+                               labels = c("Physical activity in month", "Smoking",
+                                          "Tobacco use", "Alcohol intake in 30 days"))
+
+# Bar plot
+ggplot(l_tab_behav, aes(x = Response, y = Count, fill = Response)) +
+  geom_bar(stat = "identity", width = 0.6) +
+  scale_fill_manual(values = c("Yes" = "#1f77b4", "No" = "orange")) +
+  scale_y_continuous(labels = scales::comma, expand = expansion(mult = c(0, 0.12))) +
+  facet_wrap(~ variable, nrow = 2, ncol = 2) +
+  geom_text(aes(label = scales::comma(Count)),
+            vjust = -0.4, size = 3.2) +
+  labs(title = expression(underline("Behavioral Characteristics: BRFSS in 2023")),
+    subtitle = expression(underline("n = 399,230")),
+           x = NULL, 
+           y = "Count",
+     caption = "Figure 2: Behavioral characteristics of the respondents of BRFSS in 2023")  +
+  theme_minimal(base_size = 12) +
+  theme(
+        plot.title = element_text(hjust = 0.5, 
+                                   size = 12),
+        plot.subtitle = element_text(hjust = 0.5,
+                                  size = 8, 
+                                 color = "gray40"),
+        axis.title = element_text(size = 8),
+        axis.text = element_text(size = 8, 
+                                hjust = 1),
+        plot.caption = element_text(hjust = 0.5, 
+                                     face = "italic", 
+                                     size = 8),
+        legend.position    = "none",
+        strip.text         = element_text(face = "bold"),
+        panel.grid.major.x = element_blank())
+```
+
+Interpretation: Most respondents reported being physically active at least once in the past month. When it comes to smoking and tobacco use, more people identified as smokers compared to those who used tobacco products directly. Additionally, the majority of respondents reported consuming alcohol in the past 30 days.
+
+### 4. Diabetes related:
+
+#### 4.1 Diabetes status by income level
+
+```{r Plot diabetes status by income level}
+# Keep filled rows in both income_level and diabetes_status, removing NAs
+income_diab <- df[c("income_level", "diabetes_status")]
+income_diab_clean <- income_diab[complete.cases(income_diab), ]
+# Count observation for n
+# nrow(income_diab_clean)
+
+#plot
+ggplot(income_diab_clean, aes(x = income_level, fill = diabetes_status)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("Yes" = "darkred", "No" = "#4daf4a")) +
+  labs(
+    title = expression(underline("Diabetes Status by Income Level: BRFSS, 2023")),
+    subtitle = expression(underline("n = 346,224")),
+    caption = "Figure 3: Diabetes status by income level of respondents of BRFSS in 2023",
+    x = "Income Level",
+    y = "Frequency",
+    fill = "Diabetes") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, 
+                              size = 12),
+    axis.title = element_text(size = 8),
+    plot.subtitle = element_text(hjust = 0.5,
+                                  size = 8, 
+                                 color = "gray40"),
+    plot.caption = element_text(hjust = 0.5, 
+                                 face = "italic", 
+                                 size = 8),
+    axis.line = element_line(color = "grey", 
+                          linewidth = 0.8),
+    axis.text.x = element_text(size = 8, 
+                            angle = 45,
+                            hjust = 1),
+    axis.text.y = element_text(size = 8))
+```
+
+Interpretation: Across all income levels, most respondents did not have diabetes, with the majority of the sample falling in the middle to higher income range. However, lower income groups carried a disproportionately higher burden of diabetes relative to their size.
+
+#### 4.2 US States by diabetes prevalence: BRFSS, 2023
+
+```{r Map diabetes prevalence across US states}
+# Visualize the diabetes prevalence on US MAP
+# Create dataframe with state name and diabetes cases
+diab_st_df <- as.data.frame(table(df$state_name, df$diabetes_status))
+colnames(diab_st_df) <- c("state", 
+                     "diabetes_status", 
+                     "frequency")
+
+# Widening the df with separate "No" count
+diab_st_df <- reshape(diab_st_df, 
+                     idvar = names(diab_st_df)[1],
+                     timevar = "diabetes_status", 
+                     direction = "wide",
+                     v.names = "frequency")
+
+# Stripping the "frequency." prefix
+names(diab_st_df) <- gsub("frequency\\.", "", names(diab_st_df))
+
+# Adding total column
+diab_st_df$total <- diab_st_df$Yes + diab_st_df$No
+
+# Adding prevalence column
+diab_st_df$prevalence <- (diab_st_df$Yes / diab_st_df$total) * 100
+
+# Before plotting, verify all U.S. states are represented in diab_state_df
+# by comparing against the built-in 'statepop' reference dataset from the
+# usmap package.
+
+# statepop <- usmap::statepop
+# setdiff(statepop$full, diab_st_df$state)
+# There is no diabetes data available from the "Kentucky", "Pennsylvania" state.
+# Sometimes the data are not reported for certain states if they don't fulfill 
+# certain requirements.
+
+# Prep to add each state name to label on map
+
+# Plotting the diabetes cases from survey in the US map
+plot_usmap(data = diab_st_df,
+           regions = "states",
+           values = "prevalence",
+           include = c(state.abb, "PR"), #default: excludes Puerto Rico
+           color = "white",
+           labels = TRUE) +  
+  scale_fill_continuous(low = "lightyellow", high = "darkred") +
+  labs(
+    title = expression(underline("US States by Diabetes Prevalence: BRFSS, 2023")),
+    subtitle = expression(underline("n = 433,323")),
+    fill = "Prevalence",
+    caption = "Figure 4: US states by Diabetes Prevalence: BRFSS, 2023") +
+  theme(
+    plot.title = element_text(hjust = 0.5, 
+                               size = 15, 
+                               face = "bold",
+                              margin = margin (b = 5)),
+    plot.subtitle = element_text(hjust = 0.5,
+                                  size = 8, 
+                                 color = "black"),
+    plot.caption = element_text(hjust = 0.5, 
+                                 face = "italic", 
+                                 size = 8),
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 40),
+    plot.background = element_rect(fill = "lightblue", 
+                                  color = NA),
+    legend.position = "right",
+    legend.background = element_rect(fill = "lightblue", 
+                                    color = NA))
+```
+
+Interpretation: Diabetes prevalence varied across US states, with the southeastern region showing the highest rates, particularly in states like West Virginia, and Alabama. There is no diabetes data available from the "Kentucky", "Pennsylvania" state.
+
+#### 4.3 Mean age of first diabetes diagnosis
+
+```{r Mean age of first diabetes diagnosis}
+mean(df$diab_first_known, na.rm = TRUE)
+```
+
+On average, individuals in this dataset first became aware of their diabetes condition at approximately 53.40 years of age.
