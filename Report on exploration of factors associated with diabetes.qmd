@@ -187,7 +187,6 @@ for (var in names(all_labels)) {
 }
 ```
 
-
 ```{r Recode to two-levels}
 #| echo: false
 #| output: false
@@ -238,7 +237,6 @@ replace_with_na <- function(df, to_be_replaced) {
 short_brfss <- replace_with_na(short_brfss, to_be_replaced)
 ```
 
-
 ```{r Clean Empty Levels}
 #| echo: false
 #| output: false
@@ -263,7 +261,6 @@ for (v in YN_vars) {
   short_brfss[[v]] <- factor(short_brfss[[v]], levels = c("Yes", "No"))
 }
 ```
-
 
 ```{r Frequency table of variables}
 #| echo: false
@@ -306,7 +303,6 @@ labs <- c(id_no = "Sequence number",
 label(short_brfss) <- as.list(labs[match(names(short_brfss),
                                          names(labs))])
 ```
-
 
 ```{r Save cleaned dataset}
 #| echo: false
